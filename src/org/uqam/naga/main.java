@@ -16,8 +16,5 @@ public class main {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        ClientTest test = new ClientTest();
-        test.testCommunication(serverParam);
     }
 }

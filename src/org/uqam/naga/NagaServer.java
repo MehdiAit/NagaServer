@@ -6,7 +6,7 @@ import java.io.*;
 public class NagaServer extends Thread{
 
     private final static int DEFAULT_PORT = 3000;
-    private final static int DEFAULT_TIMEOUT = 70000;
+    private final static int DEFAULT_TIMEOUT = (int) 7.2e+6; // Time in milliseconds (two hours)
     private static boolean SERVER_STATE = false;
     private ServerSocket listenSocket;
 
@@ -23,45 +23,21 @@ public class NagaServer extends Thread{
         SERVER_STATE = true;
     }
 
+    /**
+     * A multi-threaded server
+     * Each Thread is instantiated with a client socket
+     * The measurement part is done by the Measurement class which extends Thread
+     * This allow multiple scenarios connection to the server.
+     */
     @Override
     public void run() {
+        System.out.println("NAGA VIPER Server : Started");
         while (SERVER_STATE) // Less than the number of run passed as arg
         {
             try {
-                System.out.println("Naga Viper Server Start - Time out : " + listenSocket.getSoTimeout());
-
                 // Waiting for a client connection with the server.
-                Socket server = listenSocket.accept();
-                System.out.println(String.format("SERVER - Address :%s", server.getRemoteSocketAddress()));
-
-                // Get data from the clients
-                DataInputStream inStream = new DataInputStream(server.getInputStream());
-                String signal = inStream.readUTF();
-                System.out.println(String.format("SERVER - Data received : %s", signal));
-
-                if (signal.equals("START")){
-                    System.out.println("Calabash Start");
-                    Thread tmp = new Thread()
-                    {
-                        @Override
-                        public void run() {
-                            for(int i = 0;i < 20; i++)
-                            {
-                                System.out.println("Start Measurements");
-                                try {
-                                    sleep(100);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }
-                    };
-                    tmp.start();
-                    tmp.join();
-                }
-
-                System.out.println("End the N run the next will start soon");
-
+                Thread measurementRun = new Measurement(listenSocket.accept());
+                measurementRun.start();
 
             }catch (SocketTimeoutException t)
             {
@@ -69,8 +45,6 @@ public class NagaServer extends Thread{
                 System.out.print("Time out");
             }
             catch (IOException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
